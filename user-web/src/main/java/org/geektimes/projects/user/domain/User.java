@@ -2,6 +2,7 @@ package org.geektimes.projects.user.domain;
 
 import org.geektimes.projects.user.validator.bean.validation.Phone;
 import org.hibernate.validator.constraints.Email;
+import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.*;
 import javax.validation.constraints.Max;
@@ -28,8 +29,7 @@ public class User implements Serializable {
     private String name;
 
     @Column
-    @Max(32)
-    @Min(6)
+    @Length(min = 6, max = 32)
     private String password;
 
     @Email

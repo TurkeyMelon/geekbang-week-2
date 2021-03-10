@@ -6,6 +6,7 @@ import org.geektimes.web.mvc.exception.BindException;
 
 import javax.annotation.Resource;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import javax.persistence.TypedQuery;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -27,9 +28,7 @@ public class UserServiceImpl implements UserService {
     @LocalTransactional
     public boolean register(User user) {
         System.out.println("DEBUG: Register user: " + user);
-        // before process
-//        EntityTransaction transaction = entityManager.getTransaction();
-//        transaction.begin();
+
         Set<ConstraintViolation<User>> constraintViolations = validator.validate(user);
         if (!constraintViolations.isEmpty()) {
             StringBuilder sb = new StringBuilder("参数校验异常: ");
@@ -38,11 +37,13 @@ public class UserServiceImpl implements UserService {
             constraintViolations.forEach(c -> {
                 sb.append(c.getPropertyPath().toString()).append(":").append(c.getMessage())
                         .append(" 不合法值: ").append(c.getInvalidValue()).append(System.getProperty("line.separator"));
-                errorMap.computeIfPresent(c.getPropertyPath().toString(), (fieldName, preErrorMsg) -> preErrorMsg + ", " + c.getMessage());
+                errorMap.put(c.getPropertyPath().toString(), c.getMessage());
             });
             throw new BindException(errorMap, sb.toString());
         }
-
+//        before process
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
         // 主调用
         entityManager.persist(user);
 
@@ -71,7 +72,7 @@ public class UserServiceImpl implements UserService {
         // 这种情况 update 方法同样共享了 register 方法物理事务，并且通过 Savepoint 来实现局部提交和回滚
 
         // after process
-        // transaction.commit();
+        transaction.commit();
 
         return true;
     }
